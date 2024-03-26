@@ -58,6 +58,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.Contains(m.Content, s.State.User.Mention()) {
 		fmt.Print("Message received: ", m.Content, "\n")
 
+		// Remove the mention from the message
+		m.Content = strings.ReplaceAll(m.Content, s.State.User.Mention(), "")
+
 		// Create a slice of strings to hold the key-value pairs
 		oldNewPairs := make([]string, 0, len(replaceMap)*2)
 		for old, new := range replaceMap {
