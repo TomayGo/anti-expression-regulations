@@ -61,22 +61,60 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// Remove the mention from the message
 		m.Content = strings.ReplaceAll(m.Content, s.State.User.Mention(), "")
 
-		// Create a slice of strings to hold the key-value pairs
-		oldNewPairs := make([]string, 0, len(replaceMap)*2)
+		// Create a map for reverse replacements
+		reverseReplaceMap := make(map[string]string, len(replaceMap))
 		for old, new := range replaceMap {
-			oldNewPairs = append(oldNewPairs, old, new)
+			reverseReplaceMap[new] = old
 		}
 
-		// Create a replacer object
-		replacer := strings.NewReplacer(oldNewPairs...)
+		// Check if the message contains a string that needs to be replaced
+		for old := range replaceMap {
+			if strings.Contains(m.Content, old) {
+				// Create a slice of strings to hold the key-value pairs
+				oldNewPairs := make([]string, 0, len(replaceMap)*2)
+				for old, new := range replaceMap {
+					oldNewPairs = append(oldNewPairs, old, new)
+				}
 
-		// Replace the desired string
-		newMessage := replacer.Replace(m.Content)
+				// Create a replacer object
+				replacer := strings.NewReplacer(oldNewPairs...)
 
-		// Send the modified message back
-		_, err := s.ChannelMessageSend(m.ChannelID, newMessage)
-		if err != nil {
-			fmt.Println("Error sending message:", err)
+				// Replace the desired string
+				newMessage := replacer.Replace(m.Content)
+
+				// Send the modified message back
+				_, err := s.ChannelMessageSend(m.ChannelID, newMessage)
+				if err != nil {
+					fmt.Println("Error sending message:", err)
+				}
+
+				return
+			}
+		}
+
+		// Check if the message contains a string that needs to be reversed
+		for new := range reverseReplaceMap {
+			if strings.Contains(m.Content, new) {
+				// Create a slice of strings to hold the key-value pairs for reverse replacements
+				oldNewPairs := make([]string, 0, len(reverseReplaceMap)*2)
+				for old, new := range reverseReplaceMap {
+					oldNewPairs = append(oldNewPairs, old, new)
+				}
+
+				// Create a replacer object for reverse replacements
+				replacer := strings.NewReplacer(oldNewPairs...)
+
+				// Replace the desired string
+				originalMessage := replacer.Replace(m.Content)
+
+				// Send the original message back
+				_, err := s.ChannelMessageSend(m.ChannelID, originalMessage)
+				if err != nil {
+					fmt.Println("Error sending message:", err)
+				}
+
+				return
+			}
 		}
 	}
 }
